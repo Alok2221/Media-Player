@@ -1,10 +1,13 @@
 package org.example.user_interface;
 
+import javafx.scene.media.MediaPlayer;
 import org.example.AppMusicPlayer;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
+import java.io.File;
+import java.util.List;
 
 public class UIComponents {
     private final JPanel mainPanel;
@@ -94,7 +97,6 @@ public class UIComponents {
 
         mainPanel.add(controlsPanel, BorderLayout.NORTH);
 
-        // === Bottom Panel: Progress + Status Labels ===
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBackground(Color.DARK_GRAY);
 
@@ -171,42 +173,80 @@ public class UIComponents {
     }
 
     public void addToPlaylist(String name) {
-        playlistModel.addElement(name);
+        SwingUtilities.invokeLater(() -> {
+            DefaultListModel<String> model;
+            if (playlistList.getModel() instanceof DefaultListModel) {
+                model = (DefaultListModel<String>) playlistList.getModel();
+            } else {
+                model = new DefaultListModel<>();
+            }
+            model.addElement(name);
+            playlistList.setModel(model);
+        });
+    }
+
+    public void clearPlaylist() {
+        SwingUtilities.invokeLater(() -> {
+            DefaultListModel<String> model = new DefaultListModel<>();
+            playlistList.setModel(model);
+        });
     }
 
     public void setSelectedPlaylistIndex(int index) {
         playlistList.setSelectedIndex(index);
     }
 
-    public void clearPlaylist() {
-        playlistModel.clear();
-    }
-
-
     public void initListeners(AppMusicPlayer app) {
-        addSongsButton.addActionListener(e -> app.getPlaylistManager().addSongsThroughChooser());
+        addSongsButton.addActionListener(e -> {
+            app.getUIComponents().setStatus("Selecting files...");
+            app.getPlaylistManager().addSongsThroughChooser();
+        });
 
         playlistList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 int index = playlistList.getSelectedIndex();
-                if (index != -1) {
-                    app.getPlaylistManager().setCurrentTrackIndex(index);
-                    app.getMediaController().loadMediaFile(app.getPlaylistManager().getCurrentFilePath());
-                    app.getMediaController().playMedia();
+                if (index != -1 && index < app.getPlaylistManager().getMediaFiles().size()) {
+                    String filePath = app.getPlaylistManager().getMediaFiles().get(index);
+                    File file = new File(filePath);
+
+                    if (file.exists()) {
+                        app.getPlaylistManager().setCurrentTrackIndex(index);
+                        app.getMediaController().loadMediaFile(filePath);
+                    } else {
+                        app.getUIComponents().setStatus("File not found");
+                        app.getPlaylistManager().removeAt(index);
+                    }
                 }
             }
         });
 
-        playPauseButton.addActionListener(e -> app.getMediaController().togglePlayPause());
+        playPauseButton.addActionListener(e -> {
+            app.getMediaController().togglePlayPause();
+            if (app.getMediaController().getMediaPlayer() != null &&
+                    app.getMediaController().getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING) {
+                setStatus("Playing");
+            } else {
+                setStatus("Paused");
+            }
+        });
 
-        stopButton.addActionListener(e -> app.getMediaController().stopMedia());
+        stopButton.addActionListener(e -> {
+            app.getMediaController().stopMedia();
+            setStatus("Stopped");
+        });
 
-        muteButton.addActionListener(e -> app.getMediaController().toggleMute());
+        muteButton.addActionListener(e -> {
+            app.getMediaController().toggleMute();
+            muteButton.setText(app.getMediaController().isMuted() ? "Unmute" : "Mute");
+        });
 
         volumeSlider.addChangeListener(e -> {
             if (app.getMediaController().getMediaPlayer() != null) {
                 double volume = volumeSlider.getValue() / 100.0;
                 app.getMediaController().getMediaPlayer().setVolume(volume);
+                if (app.getMediaController().isMuted() && volume > 0) {
+                    app.getMediaController().setMute(false);
+                }
             }
         });
 
@@ -257,10 +297,9 @@ public class UIComponents {
         statusLabel.setText("Status: " + text);
     }
 
-    public JPopupMenu getControlPanel() {
+    public JPopupMenu getControlPanel(AppMusicPlayer app) {
         JPopupMenu popupMenu = new JPopupMenu();
 
-        // Add menu items to the popup menu
         JMenuItem playPauseItem = new JMenuItem("Play/Pause");
         JMenuItem stopItem = new JMenuItem("Stop");
         JMenuItem nextItem = new JMenuItem("Next");
@@ -271,19 +310,21 @@ public class UIComponents {
         popupMenu.add(nextItem);
         popupMenu.add(previousItem);
 
-        playPauseItem.addActionListener(e -> {
-        });
-
-        stopItem.addActionListener(e -> {
-        });
-
-        nextItem.addActionListener(e -> {
-        });
-
-        previousItem.addActionListener(e -> {
-
-        });
+        playPauseItem.addActionListener(e -> app.getMediaController().togglePlayPause());
+        stopItem.addActionListener(e -> app.getMediaController().stopMedia());
+        nextItem.addActionListener(e -> app.getPlaylistManager().playNextTrack());
+        previousItem.addActionListener(e -> app.getPlaylistManager().playPreviousTrack());
 
         return popupMenu;
+    }
+
+    public void refreshPlaylistDisplay(List<String> filePaths) {
+        SwingUtilities.invokeLater(() -> {
+            DefaultListModel<String> model = new DefaultListModel<>();
+            for (String path : filePaths) {
+                model.addElement(new File(path).getName());
+            }
+            playlistList.setModel(model);
+        });
     }
 }

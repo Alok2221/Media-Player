@@ -28,13 +28,15 @@ public class Visualization {
     }
 
     public void update(float[] magnitudes) {
-        root.getChildren().clear();
-        for (int i = 0; i < magnitudes.length; i++) {
-            double barHeight = Math.max(10, (60 + magnitudes[i]) * 2);
-            Rectangle bar = new Rectangle(i * 10, HEIGHT - barHeight, 8, barHeight);
-
-            bar.setFill(Color.hsb((i * 360.0 / magnitudes.length), 1.0, 1.0));
-            root.getChildren().add(bar);
+        if (root.getScene() != null && root.getScene().getWindow() != null) {
+            root.getChildren().clear();
+            for (int i = 0; i < magnitudes.length; i++) {
+                double barHeight = Math.max(10, (60 + magnitudes[i]) * 2);
+                Rectangle bar = new Rectangle(i * 10, HEIGHT - barHeight, 8, barHeight);
+                double brightness = Math.max(0.0, Math.min(1.0, 1.0 + magnitudes[i] / 60.0));
+                bar.setFill(Color.hsb((i * 360.0 / magnitudes.length), 1.0, brightness));
+                root.getChildren().add(bar);
+            }
         }
     }
 

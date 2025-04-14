@@ -14,7 +14,6 @@ public class AppMusicPlayer extends JFrame {
     private final JPanel videoPanel;
     private boolean isVideoMode = false;
     private final int AUDIO_HEIGHT = 600;
-    private final int VIDEO_HEIGHT = 800;
 
     public AppMusicPlayer() {
         setTitle("JavaFX Music & Video Player 🎵🎬");
@@ -28,6 +27,8 @@ public class AppMusicPlayer extends JFrame {
         uiComponents = new UIComponents();
         mediaController = new MediaController(this);
 
+        uiComponents.setStatus("Initializing...");
+
         videoPanel = new JPanel(new BorderLayout());
         videoPanel.setBackground(Color.BLACK);
 
@@ -35,7 +36,10 @@ public class AppMusicPlayer extends JFrame {
         mainPanel.add(uiComponents.getMainPanel(), BorderLayout.CENTER);
         mainPanel.add(videoPanel, BorderLayout.SOUTH);
 
+
+
         setContentPane(mainPanel);
+        uiComponents.setStatus("Ready");
         setVisible(true);
 
         uiComponents.initListeners(this);
@@ -45,22 +49,29 @@ public class AppMusicPlayer extends JFrame {
     private void initVideoToggle() {
         JToggleButton videoToggle = new JToggleButton("Toggle Video Mode");
         videoToggle.addActionListener(e -> toggleVideoMode());
-        uiComponents.getControlPanel().add(videoToggle);
+        uiComponents.getControlPanel(this).add(videoToggle);
     }
 
     private void toggleVideoMode() {
+        final int VIDEO_HEIGHT = 800;
         isVideoMode = !isVideoMode;
         if (isVideoMode) {
             setSize(800, VIDEO_HEIGHT);
             videoPanel.setPreferredSize(new Dimension(800, 400));
-            mediaController.showVideo(videoPanel);
+            SwingUtilities.invokeLater(() -> {
+                mediaController.showVideo(videoPanel);
+                revalidate();
+                repaint();
+            });
         } else {
             setSize(800, AUDIO_HEIGHT);
             videoPanel.setPreferredSize(new Dimension(0, 0));
-            mediaController.hideVideo();
+            SwingUtilities.invokeLater(() -> {
+                mediaController.hideVideo();
+                revalidate();
+                repaint();
+            });
         }
-        revalidate();
-        repaint();
     }
 
     private void applyDarkTheme() {
