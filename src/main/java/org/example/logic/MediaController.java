@@ -6,6 +6,7 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaView;
 import javafx.util.Duration;
 import org.example.AppMusicPlayer;
 import org.example.user_interface.UIComponents;
@@ -19,10 +20,16 @@ public class MediaController {
     private final AppMusicPlayer app;
     private MediaPlayer mediaPlayer;
     private Media media;
+    private MediaView mediaView;
     private boolean isMuted = false;
     private boolean isDragging = false;
     private final Visualization visualization;
     private boolean visualizationActive = true;
+    private boolean isVideo = false;
+    private static final String[] SUPPORTED_EXTENSIONS = {
+            ".mp3", ".wav", ".aac", ".m4a",  // Audio formats
+            ".mp4", ".avi", ".mkv", ".mov"   // Video formats
+    };
 
     public MediaController(AppMusicPlayer app) {
         this.app = app;
@@ -32,11 +39,15 @@ public class MediaController {
 
     private void initializeJFXPanel() {
         JFXPanel jfxPanel = new JFXPanel();
-        jfxPanel.setPreferredSize(new Dimension(640, 150));
+        jfxPanel.setPreferredSize(new Dimension(640, 360));
 
-        Group root = visualization.getRoot();
+        Group root = new Group();
         Scene scene = new Scene(root, 640, 360);
         scene.setFill(javafx.scene.paint.Color.BLACK);
+
+        mediaView = new MediaView();
+        root.getChildren().add(mediaView);
+        root.getChildren().add(visualization.getRoot());
 
         jfxPanel.setScene(scene);
         app.getUIComponents().getMainPanel().add(jfxPanel, BorderLayout.CENTER);
@@ -49,6 +60,9 @@ public class MediaController {
             File file = new File(filePath);
             media = new Media(file.toURI().toString());
             mediaPlayer = new MediaPlayer(media);
+            mediaView.setMediaPlayer(mediaPlayer);
+
+            isVideo = isVideoFile(filePath);
 
             mediaPlayer.setOnReady(() -> Platform.runLater(() -> {
                 UIComponents ui = app.getUIComponents();
@@ -57,6 +71,16 @@ public class MediaController {
                 ui.getPlayPauseButton().setEnabled(true);
                 ui.getStopButton().setEnabled(true);
                 updateTimeLabel(Duration.ZERO, media.getDuration());
+
+                if (isVideo) {
+                    mediaView.setFitWidth(640);
+                    mediaView.setFitHeight(360);
+                    visualization.getRoot().setVisible(false);
+                } else {
+                    mediaView.setFitWidth(0);
+                    mediaView.setFitHeight(0);
+                    visualization.getRoot().setVisible(true);
+                }
             }));
 
             mediaPlayer.setVolume(app.getUIComponents().getVolumeSlider().getValue() / 100.0);
@@ -81,7 +105,7 @@ public class MediaController {
             }
         });
 
-        if (visualizationActive) {
+        if (visualizationActive && !isVideo) {
             enableVisualization();
         }
     }
@@ -154,12 +178,14 @@ public class MediaController {
     }
 
     public void toggleVisualization() {
-        visualizationActive = !visualizationActive;
-        if (mediaPlayer != null) {
-            if (visualizationActive) {
-                enableVisualization();
-            } else {
-                mediaPlayer.setAudioSpectrumListener(null);
+        if (!isVideo) {
+            visualizationActive = !visualizationActive;
+            if (mediaPlayer != null) {
+                if (visualizationActive) {
+                    enableVisualization();
+                } else {
+                    mediaPlayer.setAudioSpectrumListener(null);
+                }
             }
         }
     }
@@ -189,6 +215,29 @@ public class MediaController {
 
     public MediaPlayer getMediaPlayer() {
         return mediaPlayer;
+    }
+
+    public void showVideo(JPanel videoPanel) {
+
+    }
+
+    public void hideVideo() {
+    }
+
+    private boolean isVideoFile(String filePath) {
+        String lowercasePath = filePath.toLowerCase();
+        return lowercasePath.endsWith(".mp4") || lowercasePath.endsWith(".avi") ||
+                lowercasePath.endsWith(".mkv") || lowercasePath.endsWith(".mov");
+    }
+
+    private boolean isSupported(File file) {
+        String name = file.getName().toLowerCase();
+        for (String extension : SUPPORTED_EXTENSIONS) {
+            if (name.endsWith(extension)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void showError(String message) {

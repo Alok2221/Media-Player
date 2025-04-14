@@ -256,4 +256,34 @@ public class UIComponents {
     public void setStatus(String text) {
         statusLabel.setText("Status: " + text);
     }
+
+    public JPopupMenu getControlPanel() {
+        JPopupMenu popupMenu = new JPopupMenu();
+
+        // Add menu items to the popup menu
+        JMenuItem playPauseItem = new JMenuItem("Play/Pause");
+        JMenuItem stopItem = new JMenuItem("Stop");
+        JMenuItem nextItem = new JMenuItem("Next");
+        JMenuItem previousItem = new JMenuItem("Previous");
+
+        popupMenu.add(playPauseItem);
+        popupMenu.add(stopItem);
+        popupMenu.add(nextItem);
+        popupMenu.add(previousItem);
+
+        playPauseItem.addActionListener(e -> {
+        });
+
+        stopItem.addActionListener(e -> {
+        });
+
+        nextItem.addActionListener(e -> {
+        });
+
+        previousItem.addActionListener(e -> {
+
+        });
+
+        return popupMenu;
+    }
 }

@@ -11,11 +11,15 @@ public class AppMusicPlayer extends JFrame {
     private final UIComponents uiComponents;
     private final MediaController mediaController;
     private final PlaylistManager playlistManager;
+    private final JPanel videoPanel;
+    private boolean isVideoMode = false;
+    private final int AUDIO_HEIGHT = 600;
+    private final int VIDEO_HEIGHT = 800;
 
     public AppMusicPlayer() {
-        setTitle("JavaFX Music Player 🎵");
+        setTitle("JavaFX Music & Video Player 🎵🎬");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(800, 600);
+        setSize(800, AUDIO_HEIGHT);
         setLocationRelativeTo(null);
 
         applyDarkTheme();
@@ -24,10 +28,39 @@ public class AppMusicPlayer extends JFrame {
         uiComponents = new UIComponents();
         mediaController = new MediaController(this);
 
-        setContentPane(uiComponents.getMainPanel());
+        videoPanel = new JPanel(new BorderLayout());
+        videoPanel.setBackground(Color.BLACK);
+
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.add(uiComponents.getMainPanel(), BorderLayout.CENTER);
+        mainPanel.add(videoPanel, BorderLayout.SOUTH);
+
+        setContentPane(mainPanel);
         setVisible(true);
 
         uiComponents.initListeners(this);
+        initVideoToggle();
+    }
+
+    private void initVideoToggle() {
+        JToggleButton videoToggle = new JToggleButton("Toggle Video Mode");
+        videoToggle.addActionListener(e -> toggleVideoMode());
+        uiComponents.getControlPanel().add(videoToggle);
+    }
+
+    private void toggleVideoMode() {
+        isVideoMode = !isVideoMode;
+        if (isVideoMode) {
+            setSize(800, VIDEO_HEIGHT);
+            videoPanel.setPreferredSize(new Dimension(800, 400));
+            mediaController.showVideo(videoPanel);
+        } else {
+            setSize(800, AUDIO_HEIGHT);
+            videoPanel.setPreferredSize(new Dimension(0, 0));
+            mediaController.hideVideo();
+        }
+        revalidate();
+        repaint();
     }
 
     private void applyDarkTheme() {
@@ -62,6 +95,10 @@ public class AppMusicPlayer extends JFrame {
 
     public PlaylistManager getPlaylistManager() {
         return playlistManager;
+    }
+
+    public boolean isVideoMode() {
+        return isVideoMode;
     }
 
     public static void main(String[] args) {
