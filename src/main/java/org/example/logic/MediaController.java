@@ -73,7 +73,7 @@ public class MediaController {
         }
 
         app.getUIComponents().setStatus("Loading...");
-        updateTimeLabel(Duration.ZERO, Duration.ZERO); // Reset time display
+        updateTimeLabel(Duration.ZERO, Duration.ZERO);
 
         File file = new File(filePath);
         if (!file.exists()) {
@@ -153,8 +153,8 @@ public class MediaController {
                 }
             }
         });
-        mediaPlayer.setOnPaused(() -> updateStatus("Paused", "Play"));
-        mediaPlayer.setOnStopped(() -> updateStatus("Stopped", "Play"));
+        mediaPlayer.setOnPaused(() -> updateStatus("Paused"));
+        mediaPlayer.setOnStopped(() -> updateStatus("Stopped"));
         mediaPlayer.setOnEndOfMedia(() -> app.getPlaylistManager().playNextTrack());
         mediaPlayer.setOnError(() -> showError("Playback error: " + mediaPlayer.getError()));
 
@@ -178,10 +178,10 @@ public class MediaController {
         }
     }
 
-    private void updateStatus(String status, String playPauseText) {
+    private void updateStatus(String status) {
         UIComponents ui = app.getUIComponents();
         ui.getStatusLabel().setText(status);
-        ui.getPlayPauseButton().setText(playPauseText);
+        ui.getPlayPauseButton().setText("Play");
     }
 
     public void playMedia() {
@@ -312,8 +312,6 @@ public class MediaController {
 
     public void openFileChooser() {
         JFileChooser fileChooser = new JFileChooser();
-
-        // Set the default directory to the Desktop
         String desktopPath = System.getProperty("user.home") + File.separator + "Desktop";
         fileChooser.setCurrentDirectory(new File(desktopPath));
 

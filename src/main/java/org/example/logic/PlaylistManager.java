@@ -162,8 +162,7 @@ public class PlaylistManager {
 
     public String getCurrentFilePath() {
         return (currentTrackIndex >= 0 && currentTrackIndex < mediaFiles.size())
-                ? mediaFiles.get(currentTrackIndex)
-                : null;
+                ? mediaFiles.get(currentTrackIndex) : null;
     }
 
     public void setCurrentTrackIndex(int index) {

@@ -62,8 +62,7 @@ public class UIComponents {
 
         mainPanel.add(leftSidebar, BorderLayout.WEST);
 
-
-        // === Controls Panel ===
+        // Controls Panel
         JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlsPanel.setBackground(Color.BLACK);
 
